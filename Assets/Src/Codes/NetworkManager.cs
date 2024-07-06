@@ -171,7 +171,6 @@ public class NetworkManager : MonoBehaviour
         InitialPayload initialPayload = new InitialPayload
         {
             deviceId = GameManager.instance.deviceId,
-            playerId = GameManager.instance.playerId,
             latency = GameManager.instance.latency,
         };
 
