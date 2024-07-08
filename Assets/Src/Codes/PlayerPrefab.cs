@@ -44,8 +44,8 @@ public class PlayerPrefab : MonoBehaviour
     // 서버로부터 위치 업데이트를 수신할 때 호출될 메서드
     public void UpdatePosition(float x, float y)
     {
-        Debug.Log($"x : {x}");
-        Debug.Log($"y : {y}");
+        //Debug.Log($"x : {x}");
+        //Debug.Log($"y : {y}");
         lastPosition = currentPosition;
         currentPosition = new Vector3(x, y);
         transform.position = currentPosition;

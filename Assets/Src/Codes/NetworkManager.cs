@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -132,6 +133,21 @@ public class NetworkManager : MonoBehaviour
         return header;
     }
 
+    void SendPong(long timestamp)
+    {
+        var pongWriter = new ArrayBufferWriter<byte>();
+        Packets.Serialize(pongWriter, timestamp);
+        byte[] data = pongWriter.WrittenSpan.ToArray();
+
+        byte[] header = CreatePacketHeader(data.Length, Packets.PacketType.Ping);
+
+        byte[] packet = new byte[header.Length + data.Length];
+        Array.Copy(header, 0, packet, 0 , header.Length);
+        Array.Copy(data, 0, packet, header.Length, data.Length);
+
+        stream.Write(packet, 0, packet.Length);
+    }
+
     // 공통 패킷 생성 함수
     async void SendPacket<T>(T payload, uint handlerId)
     {
@@ -164,7 +180,7 @@ public class NetworkManager : MonoBehaviour
         await Task.Delay(GameManager.instance.latency);
         
         // 패킷 전송
-        stream.Write(packet, 0, packet.Length);
+        stream.Write(packet, 0, packet.Length); 
     }
 
     void SendInitialPacket() {
@@ -183,6 +199,9 @@ public class NetworkManager : MonoBehaviour
         {
             x = x,
             y = y,
+            inputX = GameManager.instance.player.inputVec.x,
+            inputY = GameManager.instance.player.inputVec.y,
+            speed = GameManager.instance.player.speed,
         };
 
         SendPacket(locationUpdatePayload, (uint)Packets.HandlerIds.LocationUpdate);
@@ -231,6 +250,9 @@ public class NetworkManager : MonoBehaviour
 
             switch (packetType)
             {
+                case Packets.PacketType.Ping:
+                    HandlePingPacket(packetData);
+                    break;
                 case Packets.PacketType.Normal:
                     HandleNormalPacket(packetData);
                     break;
@@ -239,6 +261,20 @@ public class NetworkManager : MonoBehaviour
                     break;
             }
         }
+    }
+
+    void HandlePingPacket(byte[] packetData) {
+        try {
+            var pingMessage = Packets.Deserialize<Ping>(packetData);
+            long timestamp = pingMessage.timestamp;
+            //Debug.Log($"timestamp : {timestamp}");
+
+            SendPong(timestamp);
+        }
+        catch (Exception e) {
+            Debug.LogError($"Error processing pingMessage data: {e.Message}");
+        }
+
     }
 
     void HandleNormalPacket(byte[] packetData) {
@@ -291,10 +327,14 @@ public class NetworkManager : MonoBehaviour
             if (data.Length > 0) {
                 // 패킷 데이터 처리
                 response = Packets.Deserialize<LocationUpdate>(data);
+                int maxLatency = (int)response.maxLatency;
+                GameManager.instance.SetMaxLatency(maxLatency);
             } else {
                 // data가 비어있을 경우 빈 배열을 전달
                 response = new LocationUpdate { users = new List<LocationUpdate.UserLocation>() };
             }
+
+            
 
             Spawner.instance.Spawn(response);
         } catch (Exception e) {

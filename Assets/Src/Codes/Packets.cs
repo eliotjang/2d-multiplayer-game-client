@@ -31,6 +31,13 @@ public class Packets : MonoBehaviour
 }
 
 [ProtoContract]
+public class Ping
+{
+    [ProtoMember(1, IsRequired = true)]
+    public long timestamp { get; set; }
+}
+
+[ProtoContract]
 public class InitialPayload
 {
     [ProtoMember(1, IsRequired = true)]
@@ -62,6 +69,12 @@ public class LocationUpdatePayload {
     public float x { get; set; }
     [ProtoMember(2, IsRequired = true)]
     public float y { get; set; }
+    [ProtoMember(3, IsRequired = true)]
+    public float inputX { get; set; }
+    [ProtoMember(4, IsRequired = true)]
+    public float inputY { get; set; }
+    [ProtoMember(5,  IsRequired = true)]
+    public float speed { get; set; }
 }
 
 [ProtoContract]
@@ -69,6 +82,9 @@ public class LocationUpdate
 {
     [ProtoMember(1)]
     public List<UserLocation> users { get; set; }
+
+    [ProtoMember(2, IsRequired = false)]
+    public float maxLatency { get; set; }
 
     [ProtoContract]
     public class UserLocation

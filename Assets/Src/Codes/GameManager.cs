@@ -43,6 +43,12 @@ public class GameManager : MonoBehaviour
         AudioManager.instance.PlaySfx(AudioManager.Sfx.Select);
     }
 
+    public void SetMaxLatency(int maxLatency)
+    {
+        //Debug.Log($"maxLatency : {maxLatency}");
+        latency = maxLatency;
+    }
+
     public void GameOver() {
         StartCoroutine(GameOverRoutine());
     }
